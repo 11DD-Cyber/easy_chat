@@ -6,10 +6,10 @@ package server
 
 import (
 	"context"
+	"easy_chat/apps/user/rpc/internal/logic"
+	"easy_chat/apps/user/rpc/internal/svc"
 
-	"rpc/internal/logic"
-	"rpc/internal/svc"
-	"rpc/user"
+	"easy_chat/apps/user/rpc/user"
 )
 
 type UserServer struct {

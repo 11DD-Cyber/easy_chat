@@ -1,0 +1,36 @@
+syntax = "v1"
+
+info (
+	title:  "用户服务的实例对象"
+	author: "雪糕"
+)
+
+import (
+	"domain.api"
+)
+
+@server (
+	prefix: v1/user // 接口 URL 前缀
+	group:  user // 接口分组名
+)
+service user {
+	@doc "用户注册" // 接口文档，生成接口文档时显示
+	@handler register // 指定处理函数名，生成代码时会创建 `register.go` 文件
+	post /register (RegisterReq) returns (RegisterResp)
+
+	@doc "用户登入"
+	@handler login
+	post /login (LoginReq) returns (LoginResp)
+}
+
+@server (
+	prefix: v1/user
+	group:  user
+	jwt:    JwtAuth
+)
+service user {
+	@doc "获取用户信息"
+	@handler detail
+	get /user (UserInfoReq) returns (UserInfoResp)
+}
+

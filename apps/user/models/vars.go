@@ -1,5 +1,5 @@
 package models
 
-import "github.com/zeromicro/go-zero/core/stores/sqlx"
+import "github.com/zeromicro/go-zero/core/stores/sqlc"
 
-var ErrNotFound = sqlx.ErrNotFound
+var ErrNotFound = sqlc.ErrNotFound

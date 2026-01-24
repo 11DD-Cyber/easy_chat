@@ -2,7 +2,7 @@ package svc
 
 import (
 	"easy_chat/apps/user/models"
-	"rpc/internal/config"
+	"easy_chat/apps/user/rpc/internal/config"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
