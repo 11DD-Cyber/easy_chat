@@ -5,7 +5,7 @@ package types
 
 type LoginReq struct {
 	Phone    string `json:"phone"`
-	Password string `json:password`
+	Password string `json:"password"`
 }
 
 type LoginResp struct {

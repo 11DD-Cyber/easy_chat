@@ -1,0 +1,148 @@
+syntax="proto3";
+package social;
+option go_package="./social";
+
+//存储已建立的好友关系
+message Friends{
+    int64 id=1;   //这条好友关系的唯一主键
+    string userId=2;  //当前用户的 ID
+    string remark=3;  //你给这个好友的备注名
+    int32 addSource=4; //添加这个好友的来源
+    string friendUid=5; //好友的用户 ID
+}
+//存储好友申请的全流程记录
+message FriendRequests{
+    string id=1; //这条好友申请的唯一主键
+    string userId=2; //发起好友申请的用户 ID
+    string reqUid=3; //被申请的用户 ID
+    string reqMsg=4; //申请时附带的验证消息
+    int64 reqTime=5; //发起申请的时间戳
+    int32 handleResult=6; //申请的处理结果
+}
+
+message Groups{
+    string id=1;
+    string name=2;
+    string icon=3;
+    int32 status=4;
+    string creator_uid=5;
+    int32 groupType=6;
+    bool isVerify=7;   //加群是否需要验证
+    string notification=8; //群公告
+    string notificationUid=9;
+}
+message GroupMembers{
+    int32 id=1;
+    string groupId=2;
+    string userId=3;
+    int32 roleLevel=6;
+    int64 joinTime=7;
+    int32 joinSource=8; //加入方式
+    string inviterUid=9; //邀请人 ID
+    string operatorUid=10; //操作人 ID
+}
+message GroupRequests{
+    int32 id=1;
+    string groupId=2;
+    string reqId=3;
+    string reqMsg=4;
+    int64 reqTime=5;
+    int32 joinSouce=6;//申请来源
+    string inviterUid=7;//邀请人 ID
+    string handleUid=8;//处理申请的用户 ID
+    int32 handleResult=9;//处理结果
+}
+//业务
+message FriendPutInReq{
+    string userId=2;
+    string reqUid=3;
+    string reqMsg=4;
+    int64 reqTime=5;
+}
+message FriendPutInResp{}
+
+message FriendPutInHandleReq{
+    string friendReqId=1;
+    string userId=2;
+    int32 handleResult=3; //处理结果
+}
+message FriendPutInHandleResp{}
+message FriendPutInListReq{
+   string userId=1;
+}
+message FriendPutInListResp{
+    repeated FriendRequests list =1;
+}
+message FriendListReq{
+    string userId=1;
+}
+message FriendListResp{
+    repeated Friends list=1;
+}
+
+//群
+message GroupCreateReq{
+    string name=2;
+    string icon=3;
+    int32 status=4;
+    string creator_uid=5;
+}
+message GroupCreateResp{}
+
+message GroupPutinReq{
+   string reqId=1;
+   string groupId=2;
+   string reqMsg=3;
+   int64 reqTime=5;
+   int32 joinSource=6;
+   string inviterUid=7;
+
+}
+message GroupPutinResp{}
+
+message GroupPutinListReq{
+    string groupId=1;
+}
+message GroupPutinListResp{
+    repeated GroupRequests list=1;
+}
+message GroupPutInHandleReq{
+    int32 groupReqId=1;
+    string groupId=2;
+    string handleUid=3;
+    int32 handleResult=4;
+}
+message GroupPutInHandleResp{
+
+}
+message GroupListReq{
+    string userId=1;
+}
+message GroupListResp{
+    repeated Groups list=1;
+}
+message GroupUsersReq{
+    string groupId=1;
+}
+message GroupUsersResp{
+    repeated GroupMembers list =1;
+}
+service social{
+    //好友业务 ：请求好友、通过或拒绝申请、好友列表
+    //发起好友申请
+    rpc FriendPutIn(FriendPutInReq) returns (FriendPutInResp) ;
+    //处理好友申请
+    rpc FriendPutInHandle(FriendPutInHandleReq)returns(FriendPutInHandleResp);
+    //获取好友申请列表
+    rpc FriendPutInList(FriendPutInListReq)returns(FriendPutInListResp);
+    //获取我的好友列表
+    rpc FriendList(FriendListReq)returns (FriendListResp);
+
+    //群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
+    rpc GroupCreate(GroupCreateReq)returns(GroupCreateResp);
+    rpc GroupPutin(GroupPutinReq)returns(GroupPutinResp);
+    rpc GroupPutinList(GroupPutinListReq)returns(GroupPutinListResp);
+    rpc GroupPutInHandle(GroupPutInHandleReq)returns(GroupPutInHandleResp);
+    rpc GroupList(GroupListReq)returns(GroupListResp);
+    rpc GroupUsers(GroupUsersReq)returns(GroupUsersResp);
+}

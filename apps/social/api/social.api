@@ -1,0 +1,77 @@
+syntax = "v1"
+
+info (
+	title:  "社交服务的实例对象"
+	author: "狗狗雪糕"
+)
+
+type (
+	Friends {
+		id        string `json:"id,omitempty"`
+		FriendUid string `json:"friend_uid"`
+		Nickname  string `json:"nickname,omitempty"`
+		Avatar    string `json:"avatar,omitempty"`
+		Remark    string `json:"remark,omitempty"`
+	}
+	FriendRequests {
+		Id           string
+		UserId       string
+		ReqUid       string
+		ReqMsg       string
+		HandleResult int `json:"handle_result"`
+	}
+)
+
+type (
+	FriendPutInReq {
+		ReqId  string `json:"req_id"`
+		ReqMsg string `json:"req_msg,omitempty"`
+	}
+	FriendPutInResp  {}
+)
+
+type (
+	FriendPutInHandleReq {
+		FriendReqId  string `json:"friend_req_id"`
+		HandleResult int32  `json:"handle_result"`
+	}
+	FriendPutInHandleResp  {}
+)
+
+type (
+	FriendPutInListReq  {}
+	FriendPutInListResp {
+		List []*FriendRequests `json:"list"`
+	}
+)
+
+type (
+	FriendListReq  {}
+	FriendListResp {
+		List []*Friends `json:"list"`
+	}
+)
+
+@server (
+	prefix: v1/social
+	group:  Friends
+	jwt:    JwtAuth
+)
+service social {
+	@doc "好友申请"
+	@handler friendPutIn
+	post /friend/putIn (FriendPutInReq) returns (FriendPutInResp)
+
+	@doc "好友申请处理"
+	@handler friendPutInHandle
+	put /friend/putIn (FriendPutInHandleReq) returns (FriendPutInHandleResp)
+
+	@doc "好友申请列表"
+	@handler friendPutInList
+	get /friend/putIns (FriendPutInListReq) returns (FriendPutInListResp)
+
+	@doc "好友列表"
+	@handler friendList
+	get /friends (FriendListReq) returns (FriendListResp)
+}
+

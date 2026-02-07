@@ -4,12 +4,16 @@ go 1.25.3
 
 require (
 	github.com/edwingeng/wuid v1.0.0
-	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/go-viper/mapstructure/v2 v2.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/jinzhu/copier v0.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/zeromicro/go-zero v1.9.4
 	github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+	go.mongodb.org/mongo-driver/v2 v2.4.1
 	golang.org/x/crypto v0.33.0
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.36.5
 )
@@ -33,8 +37,8 @@ require (
 	github.com/go-openapi/swag v0.22.4 // indirect
 	github.com/go-sql-driver/mysql v1.9.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -59,6 +63,10 @@ require (
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/redis/go-redis/v9 v9.17.2 // indirect
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
+	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/xdg-go/scram v1.1.2 // indirect
+	github.com/xdg-go/stringprep v1.0.4 // indirect
+	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.15 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.15 // indirect
 	go.etcd.io/etcd/client/v3 v3.5.15 // indirect
@@ -80,12 +88,12 @@ require (
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240711142825-46eb208f015d // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -10,9 +10,11 @@ import (
 	"easy_chat/apps/user/api/internal/config"
 	"easy_chat/apps/user/api/internal/handler"
 	"easy_chat/apps/user/api/internal/svc"
+	"easy_chat/pkg/resultx"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
+	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 var configFile = flag.String("f", "etc/user.yaml", "the config file")
@@ -28,7 +30,8 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	handler.RegisterHandlers(server, ctx)
-
+	httpx.SetOkHandler(resultx.OkHandler)
+	httpx.SetErrorHandlerCtx(resultx.ErrHandler(c.Name))
 	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
 	server.Start()
 }

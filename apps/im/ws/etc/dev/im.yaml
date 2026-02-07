@@ -1,0 +1,8 @@
+Name: im.ws
+ListenOn: 0.0.0.0:10090
+JwtAuth:
+  AccessSecret: dogdogicecream
+
+Mongo:
+  Url: mongodb://localhost:27017
+  Db: easy_chat

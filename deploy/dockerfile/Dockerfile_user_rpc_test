@@ -1,0 +1,18 @@
+﻿FROM golang:1.25.3-alpine AS builder
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /usr/local/bin/user_rpc ./apps/user/rpc
+
+FROM gcr.io/distroless/static-debian11
+ENV POD_IP=192.168.0.109
+COPY --from=builder /usr/local/bin/user_rpc /usr/local/bin/user_rpc
+COPY --from=builder /src/apps/user/rpc/etc/user.yaml /etc/user/user.yaml
+
+EXPOSE 9090
+ENTRYPOINT /usr/local/bin/user_rpc -f /etc/user/user.yaml

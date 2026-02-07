@@ -1,7 +1,7 @@
 package ctxdata
 
 import (
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 const Identify = "gougouxuegao"

@@ -9,6 +9,7 @@ import (
 	"easy_chat/apps/user/api/internal/logic/user"
 	"easy_chat/apps/user/api/internal/svc"
 	"easy_chat/apps/user/api/internal/types"
+
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
@@ -22,7 +23,11 @@ func DetailHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		}
 		l := user.NewDetailLogic(r.Context(), svcCtx)
 		resp, err := l.Detail(&req)
-		response.Response(r, w, resp, err)
+		if err != nil {
+			httpx.ErrorCtx(r.Context(), w, err)
+			return
+		}
+		httpx.OkJsonCtx(r.Context(), w, resp)
 
 	}
 }
