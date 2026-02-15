@@ -10,6 +10,11 @@ import (
 )
 
 type Conn struct {
+	//消息队列
+	messageMu      sync.Mutex
+	readMessageSeq map[string]*Message
+	readMessages   []*Message
+	message        chan *Message
 	*websocket.Conn
 	s                 *Server
 	mu                sync.Mutex
@@ -32,7 +37,11 @@ func NewConn(w http.ResponseWriter, r *http.Request, s *Server) *Conn {
 		maxConnectionIdle: defaultMaxConnectionIdle,
 		done:              make(chan struct{}),
 		closed:            false,
+		readMessages:      make([]*Message, 0, 2),
+		readMessageSeq:    make(map[string]*Message, 2),
+		message:           make(chan *Message, 1),
 	}
+	go conn.keepalive()
 	return conn
 }
 
@@ -89,4 +98,44 @@ func (c *Conn) Close() error {
 	close(c.done)
 	// 关闭底层WS连接
 	return c.Conn.Close()
+}
+
+func (c *Conn) appendMsgMq(msg *Message) {
+	c.messageMu.Lock()
+	defer c.messageMu.Unlock()
+	//读队列
+	if m, ok := c.readMessageSeq[msg.Id]; ok {
+		//客户端可能重复发送了消息或者收到ack消息
+		if len(c.readMessages) == 0 {
+			//数据已被处理不存在，属于重复
+			return
+		}
+		if m.Id != msg.Id || m.AckSeq >= msg.AckSeq {
+			//数据已经被处理不存在，属于重复
+			return
+		}
+		//等于最新的记录
+		c.readMessageSeq[msg.Id] = msg
+		return
+	}
+	//意外发送ack信息，直接过滤
+	if msg.FrameType == FrameAck {
+		return
+	}
+	c.readMessages = append(c.readMessages, msg)
+	c.readMessageSeq[msg.Id] = msg
+
+}
+
+func (c *Conn) handleCAck(msg *Message) {
+	c.messageMu.Lock()
+	defer c.messageMu.Unlock()
+
+	if entry, ok := c.readMessageSeq[msg.Id]; ok {
+		if msg.AckSeq > entry.AckSeq {
+			entry.AckSeq = msg.AckSeq
+		}
+		entry.ackConfirmed = true
+		entry.ackTime = time.Now()
+	}
 }

@@ -4,8 +4,8 @@ import "easy_chat/pkg/constants"
 
 type (
 	Msg struct {
-		constants.MType `mapstructure:"mType" json:"msgType"`
-		Content         string `mapstructure:"content" json:"msgContent"`
+		constants.MType `mapstructure:"msgType" json:"msgType"`
+		Content         string `mapstructure:"msgContent" json:"msgContent"`
 	}
 )
 type (

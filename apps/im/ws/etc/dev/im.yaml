@@ -6,3 +6,8 @@ JwtAuth:
 Mongo:
   Url: mongodb://localhost:27017
   Db: easy_chat
+
+MsgChatTransfer:
+  Addrs:
+    - 127.0.0.1:9092
+  Topic: MsgChatTransfer

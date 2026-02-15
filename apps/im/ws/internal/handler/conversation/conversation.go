@@ -1,11 +1,12 @@
 package conversation
 
 import (
-	"context"
 	"easy_chat/apps/im/ws/internal/svc"
-	"easy_chat/apps/im/ws/logic"
 	"easy_chat/apps/im/ws/websocket"
 	"easy_chat/apps/im/ws/ws"
+	"easy_chat/apps/task/mq/mq"
+	"easy_chat/pkg/wuid"
+	"time"
 
 	"github.com/go-viper/mapstructure/v2"
 )
@@ -18,12 +19,19 @@ func Chat(srvCtx *svc.ServiceContext) websocket.HandlerFunc {
 			srv.Send(websocket.NewErrMessage(err), conn.Conn)
 			return
 		}
-		l := logic.NewConversation(context.Background(), srv, srvCtx)
-		if err := l.SingleChat(&data, srv.GetUsers(conn)[0]); err != nil {
-			srv.Send(websocket.NewErrMessage(err), conn.Conn)
-			return
+		if data.ConversationId == "" {
+			data.ConversationId = wuid.CombineId(data.SendId, data.RecvId)
 		}
-		srv.SendByUserId(websocket.NewMessage(data.SendId, data), data.RecvId)
-
+		err := srvCtx.MsgChatTransfer.Push(&mq.MsgChatTransfer{
+			ConversationId: data.ConversationId,
+			SendId:         data.SendId,
+			RecvId:         data.RecvId,
+			Msgtype:        data.Msg.MType,
+			Content:        data.Msg.Content,
+			SendTime:       time.Now().UnixNano(),
+		})
+		if err != nil {
+			srv.Send(websocket.NewErrMessage(err), conn.Conn)
+		}
 	}
 }

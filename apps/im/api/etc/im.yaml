@@ -1,0 +1,14 @@
+Name: im
+Host: 0.0.0.0
+Port: 8888
+
+ImRpc:
+  Etcd:
+    Hosts:
+    - 127.0.0.1:2379
+    Key: im.rpc
+
+JwtAuth:
+  AccessSecret: dogdogicecream
+  AccessExpire: 8640000
+

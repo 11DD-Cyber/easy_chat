@@ -15,7 +15,9 @@ type ChatLog struct {
 	MsgFrom        int             `bson:"msgFrom" json:"msgFrom"`
 	MsgType        constants.MType `bson:"msgType" json:"msgType"`
 	MsgContent     string          `bson:"msgContent" json:"msgContent"`
+	ChatType       int32           `bson:"chatType" json:"chatType,omitempty"`
 	SendTime       int64           `bson:"sendTime" json:"sendTime"`
+	ReadRecords    []byte          `bson:"readRecords" json:"readRecords,omitempty"`
 	Status         int             `bson:"status" json:"status"`
 	UpdateAt       time.Time       `bson:"updateAt,omitempty" json:"updateAt,omitempty"`
 	CreateAt       time.Time       `bson:"createAt,omitempty" json:"createAt,omitempty"`

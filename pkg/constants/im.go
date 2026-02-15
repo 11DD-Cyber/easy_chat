@@ -3,5 +3,6 @@ package constants
 type MType int
 
 const (
-	TextMType MType = iota
+	SYSTEM_ROOT_UID       = "root"
+	TextMType       MType = iota
 )
