@@ -33,6 +33,7 @@ func (l *GetChatLogLogic) GetChatLog(req *types.ChatLogReq) (resp *types.ChatLog
 	// todo: add your logic here and delete this line
 
 	data, err := l.svcCtx.ImRpc.GetChatLog(l.ctx, &im.GetChatLogReq{
+		MsgId:          req.MsgId,
 		ConversationId: req.ConversationId,
 		StartSendTime:  req.StartSendTime,
 		EndSendTime:    req.EndSendTime,

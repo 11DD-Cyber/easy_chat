@@ -23,31 +23,37 @@ func NewSocialServer(svcCtx *svc.ServiceContext) *SocialServer {
 	}
 }
 
-// 好友业务 ：请求好友、通过或拒绝申请、好友列表
+// 濂藉弸涓氬姟 锛氳姹傚ソ鍙嬨€侀€氳繃鎴栨嫆缁濈敵璇枫€佸ソ鍙嬪垪琛?
 func (s *SocialServer) FriendPutIn(ctx context.Context, in *social.FriendPutInReq) (*social.FriendPutInResp, error) {
 	l := logic.NewFriendPutInLogic(ctx, s.svcCtx)
 	return l.FriendPutIn(in)
 }
 
-// 处理好友申请
+// 澶勭悊濂藉弸鐢宠
 func (s *SocialServer) FriendPutInHandle(ctx context.Context, in *social.FriendPutInHandleReq) (*social.FriendPutInHandleResp, error) {
 	l := logic.NewFriendPutInHandleLogic(ctx, s.svcCtx)
 	return l.FriendPutInHandle(in)
 }
 
-// 获取好友申请列表
+// 鑾峰彇濂藉弸鐢宠鍒楄〃
 func (s *SocialServer) FriendPutInList(ctx context.Context, in *social.FriendPutInListReq) (*social.FriendPutInListResp, error) {
 	l := logic.NewFriendPutInListLogic(ctx, s.svcCtx)
 	return l.FriendPutInList(in)
 }
 
-// 获取我的好友列表
+// 鑾峰彇鎴戞己鍙戣捣鐨勮姹?
+func (s *SocialServer) FriendPutOutList(ctx context.Context, in *social.FriendPutInListReq) (*social.FriendPutInListResp, error) {
+	l := logic.NewFriendPutOutListLogic(ctx, s.svcCtx)
+	return l.FriendPutOutList(in)
+}
+
+// 鑾峰彇鎴戠殑濂藉弸鍒楄〃
 func (s *SocialServer) FriendList(ctx context.Context, in *social.FriendListReq) (*social.FriendListResp, error) {
 	l := logic.NewFriendListLogic(ctx, s.svcCtx)
 	return l.FriendList(in)
 }
 
-// 群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
+// 缇や笟鍔★細鍒涘缓缇わ紝淇敼缇わ紝缇ゅ叕鍛婏紝鐢宠缇わ紝鐢ㄦ埛缇ゅ垪琛紝缇ゆ垚鍛橈紝缇ら€€鍑?
 func (s *SocialServer) GroupCreate(ctx context.Context, in *social.GroupCreateReq) (*social.GroupCreateResp, error) {
 	l := logic.NewGroupCreateLogic(ctx, s.svcCtx)
 	return l.GroupCreate(in)

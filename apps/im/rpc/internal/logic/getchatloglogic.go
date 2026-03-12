@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"math"
 
 	"easy_chat/apps/im/rpc/im"
 	"easy_chat/apps/im/rpc/internal/svc"
@@ -47,7 +48,11 @@ func (l *GetChatLogLogic) GetChatLog(in *im.GetChatLogReq) (*im.GetChatLogResp, 
 				}},
 		}, nil
 	}
-	data, err := l.svcCtx.ChatLogModel.ListBySendTime(l.ctx, in.ConversationId, in.StartSendTime, in.EndSendTime, in.Count)
+	start := in.StartSendTime
+	if start == 0 {
+		start = math.MaxInt64
+	}
+	data, err := l.svcCtx.ChatLogModel.ListBySendTime(l.ctx, in.ConversationId, start, in.EndSendTime, in.Count)
 	if err != nil {
 		return nil, errors.Wrapf(xerr.NewDBErr(), "find chatlog list by sendtime and endtime err %v req %v", err, in)
 	}

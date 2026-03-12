@@ -3,6 +3,7 @@ package main
 import (
 	"easy_chat/apps/im/ws/internal/config"
 	"easy_chat/apps/im/ws/internal/handler"
+	"easy_chat/apps/im/ws/internal/lifecycle"
 	"easy_chat/apps/im/ws/internal/svc"
 	server "easy_chat/apps/im/ws/websocket"
 	"flag"
@@ -23,6 +24,7 @@ func main() {
 	}
 	ctx := svc.NewServiceContext(c)
 	srv := server.NewServer(c.ListenOn, handler.NewJwtAuth(ctx))
+	srv.SetLifecycle(lifecycle.NewPresence(ctx))
 	defer srv.Stop()
 
 	handler.RegisterHandlers(srv, ctx)

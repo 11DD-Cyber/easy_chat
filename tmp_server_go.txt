@@ -1,0 +1,359 @@
+package websocket
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/zeromicro/go-zero/core/logx"
+)
+
+type AckType int
+
+const (
+	//涓嶈繘琛宎ck纭
+	NoAck AckType = iota
+	//鍙洖 -涓ゆ閫氫俊
+	OnlyAck
+	//涓ユ牸 涓夋閫氫俊
+	RigorAck
+)
+
+func (t AckType) ToString() string {
+	switch t {
+	case OnlyAck:
+		return "OnlyAck"
+
+	case RigorAck:
+		return "RigorAck"
+
+	}
+	return "NoAck"
+}
+
+type Server struct {
+	// 璺敱瑙勫垯琛?
+	sync.RWMutex
+	authentication Authentication
+	routes         map[string]HandlerFunc
+	addr           string
+	connToUser     map[*Conn]string
+	userToConn     map[string]*Conn
+	upgrader       websocket.Upgrader
+	Logger         logx.Logger
+	Ack            AckType
+	httpServer     *http.Server
+}
+
+func (s *Server) AddRoutes(rs []Route) {
+	s.Lock()
+	defer s.Unlock()
+	for _, r := range rs {
+
+		s.routes[r.Method] = r.Handler
+	}
+}
+func NewServer(addr string, auth Authentication) *Server {
+	return &Server{
+		routes:         make(map[string]HandlerFunc),
+		connToUser:     make(map[*Conn]string),
+		authentication: auth,
+		userToConn:     make(map[string]*Conn),
+		addr:           addr,
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				// Allow frontend running on different origin to establish websocket connection.
+				return true
+			},
+		},
+		// 鍒濆鍖栨棩蹇楋細缁戝畾涓婁笅鏂?
+		Logger: logx.WithContext(context.Background()),
+		Ack:    NoAck,
+	}
+}
+
+func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
+	// 寮傚父鎭㈠锛氶槻姝㈠崟涓猈S杩炴帴澶勭悊panic瀵艰嚧鏁翠釜鏈嶅姟宕╂簝
+	defer func() {
+		if r := recover(); r != nil {
+			s.Logger.Errorf("server handler ws recover err %v", r)
+		}
+	}()
+	//閴存潈
+	if !s.authentication.Auth(w, r) {
+		s.Logger.Errorf("authentication failed")
+		http.Error(w, "authentication failed", http.StatusUnauthorized)
+		return
+	}
+	// 鎶奌TTP璇锋眰鍗囩骇涓篧ebSocket杩炴帴
+	conn := NewConn(w, r, s)
+	if conn == nil {
+		return
+	}
+
+	//璁板綍杩炴帴
+	s.addConn(conn, r)
+	//璇诲彇淇℃伅锛屽畬鎴愯姹?
+	go s.handlerConn(conn)
+
+}
+
+// 鏍规嵁杩炴帴瀵硅薄鎵ц浠诲姟澶勭悊
+func (s *Server) handlerConn(conn *Conn) {
+	defer func() {
+		s.Close(conn)
+
+	}()
+	go s.handleWrite(conn)
+	if s.Ack != NoAck {
+		go s.readAck(conn)
+	}
+	for {
+		//鑾峰彇璇锋眰娑堟伅
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			s.Logger.Errorf("websocket conn read message err %v", err)
+			return
+		}
+		var message Message
+		if err := json.Unmarshal(msg, &message); err != nil {
+			s.Send(NewErrMessage(err), conn.Conn)
+			continue
+		}
+		switch message.FrameType {
+		case FramePing:
+			s.Send(&Message{FrameType: FramePing}, conn.Conn)
+			continue
+		case FrameCAck:
+			conn.handleCAck(&message)
+			continue
+		}
+		//鏍规嵁璇锋眰娑堟伅绫诲瀷鍒嗙被澶勭悊
+		if s.Ack != NoAck && message.FrameType != FrameNoAck {
+			//灏嗘秷鎭坊鍔犲埌闃熷垪涓?
+			s.Logger.Infof("conn message write in msgMq %v", message)
+			conn.appendMsgMq(&message)
+
+		} else {
+			conn.message <- &message
+		}
+	}
+}
+func (s *Server) readAck(conn *Conn) {
+	for {
+		select {
+		case <-conn.done:
+			//鍏抽棴浜嗚繛鎺?
+			s.Logger.Infof("close message ack uid ")
+			return
+		default:
+			conn.messageMu.Lock()
+			if len(conn.readMessages) == 0 {
+				conn.messageMu.Unlock()
+				//娌℃湁娑堟伅鍙互鐫＄湢100ms
+				time.Sleep(100 * time.Microsecond)
+				continue
+
+			}
+			//鍙栧嚭闃熷垪涓涓€涓暟鎹?
+			message := conn.readMessages[0]
+			//鏍规嵁ack鐨勭‘璁ょ瓥鐣ラ€夋嫨鍚堥€傜殑澶勭悊鏂瑰紡
+			switch s.Ack {
+			case OnlyAck:
+				s.Send(&Message{
+					FrameType: FrameAck,
+					AckSeq:    message.AckSeq + 1,
+					Id:        message.Id,
+				}, conn.Conn)
+				//鍙洖绛旓紝鍚戝鎴风鍙戦€乤ck
+				conn.readMessages = conn.readMessages[1:]
+				conn.messageMu.Unlock()
+				conn.message <- message
+				s.Logger.Infof("message ack OnlyAck send success id %v", message.Id)
+			case RigorAck:
+				if entry := conn.readMessageSeq[message.Id]; entry != nil {
+					if message.AckSeq == 0 {
+						message.AckSeq = 1
+						entry.AckSeq = 1
+						entry.ackTime = time.Now()
+						s.Send(&Message{FrameType: FrameAck, AckSeq: 1, Id: message.Id}, conn.Conn)
+						conn.messageMu.Unlock()
+						s.Logger.Infof("message ack RigorAck send")
+						continue
+					}
+					if entry.ackConfirmed == true { // 瀹㈡埛绔凡缁忓洖浼犵‘璁?
+						conn.readMessages = conn.readMessages[1:]
+						conn.messageMu.Unlock()
+						conn.message <- message
+						s.Logger.Infof("瀹㈡埛绔凡缁忓洖浼犵‘璁?v", message.Id)
+						continue
+					}
+					if time.Since(entry.ackTime) > defaultAckTimeout {
+						entry.ackTime = time.Now()
+						s.Send(&Message{FrameType: FrameAck, AckSeq: message.AckSeq, Id: message.Id}, conn.Conn)
+
+					}
+					conn.messageMu.Unlock()
+				}
+				time.Sleep(time.Millisecond * 20)
+			}
+		}
+	}
+}
+func (s *Server) handleWrite(conn *Conn) {
+	for {
+		select {
+		case <-conn.done:
+			//缁撴潫
+			return
+		case message := <-conn.message:
+			//渚濇嵁璇锋眰娑堟伅绫诲瀷鍒嗙被澶勭悊
+			switch message.FrameType {
+			case FramePing:
+				//ping:鍥炲
+				s.Send(&Message{FrameType: FramePing}, conn.Conn)
+			case FrameData, FrameNoAck:
+				//澶勭悊
+				if handler, ok := s.routes[message.Method]; ok {
+					handler(s, conn, message)
+				} else {
+					s.Send(&Message{
+						FrameType: FrameData,
+						Data:      fmt.Sprintf("涓嶅瓨鍦ㄨ姹傛柟娉?%v", message.Method),
+					}, conn.Conn)
+				}
+			}
+			if s.Ack != NoAck {
+				//鍒犻櫎 娑堟伅ack鐨勫簭鍙疯褰?
+				conn.messageMu.Lock()
+				delete(conn.readMessageSeq, message.Id)
+				conn.messageMu.Unlock()
+
+			}
+		}
+	}
+}
+func (s *Server) addConn(conn *Conn, req *http.Request) {
+	uid := s.authentication.UserId(req)
+	if uid == "" {
+		s.Logger.Errorf("empty user id for conn %v", conn)
+		return
+	}
+	s.RWMutex.Lock()
+	defer s.RWMutex.Unlock()
+	//濡傛灉鍘熸潵灏辨湁杩炴帴
+	if c := s.userToConn[uid]; c != nil {
+		//鍏抽棴鍘熸潵鐨勮繛鎺?
+		c.Close()
+	}
+	s.connToUser[conn] = uid
+	s.userToConn[uid] = conn
+	s.Logger.Infof("user %s connect, remote: %s", uid, req.RemoteAddr)
+}
+
+func (s *Server) GetConns(uids ...string) []*websocket.Conn {
+	s.RWMutex.RLock()
+	defer s.RWMutex.RUnlock()
+	var res []*websocket.Conn
+	if len(uids) == 0 {
+		//鑾峰彇鍏ㄩ儴
+		res = make([]*websocket.Conn, 0, len(s.userToConn))
+		for _, conn := range s.userToConn {
+			res = append(res, conn.Conn)
+		}
+	} else {
+		//鑾峰彇閮ㄥ垎
+		res = make([]*websocket.Conn, 0, len(uids))
+		for _, uid := range uids {
+			if conn, ok := s.userToConn[uid]; ok {
+				res = append(res, conn.Conn)
+			}
+		}
+	}
+	return res
+}
+
+func (s *Server) GetUsers(conns ...*Conn) []string {
+	s.RWMutex.RLock()
+	defer s.RWMutex.RUnlock()
+	var res []string
+	if len(conns) == 0 {
+		res = make([]string, 0, len(s.connToUser))
+		for _, uid := range s.connToUser {
+			res = append(res, uid)
+		}
+	} else {
+		//鑾峰彇閮ㄥ垎
+		res = make([]string, 0, len(conns))
+		for _, conn := range conns {
+			if uid, ok := s.connToUser[conn]; ok {
+				res = append(res, uid)
+			}
+		}
+	}
+	return res
+}
+
+func (s *Server) Close(conn *Conn) {
+	//鍏堝叧闂繛鎺ワ紙done閫氶亾鍜屽簳灞俉S杩炴帴锛?
+	conn.Close()
+	s.RWMutex.Lock()
+	defer s.RWMutex.Unlock()
+	uid := s.connToUser[conn]
+	delete(s.connToUser, conn)
+	delete(s.userToConn, uid)
+}
+
+func (s *Server) Start() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", s.ServerWs)
+	s.httpServer = &http.Server{
+		Addr:    s.addr,
+		Handler: mux,
+	}
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		s.Logger.Errorf("websocket server listen error: %v", err)
+	}
+}
+
+func (s *Server) Stop() {
+
+	//鍏抽棴鎵€鏈夎繛鎺?
+	s.Lock()
+	defer s.Unlock()
+	for conn := range s.connToUser {
+		conn.Close()
+	}
+	//娓呯┖鏄犲皠
+	s.connToUser = make(map[*Conn]string)
+	s.userToConn = make(map[string]*Conn)
+	fmt.Println("stop server")
+}
+
+func (s *Server) SendByUserId(msg interface{}, sendIds ...string) error {
+	if len(sendIds) == 0 {
+		return nil
+	}
+	return s.Send(msg, s.GetConns(sendIds...)...)
+}
+func (s *Server) Send(msg interface{}, conns ...*websocket.Conn) error {
+	if len(conns) == 0 {
+		return nil
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		s.Logger.Errorf("marshal msg err: %v", err)
+		return err
+	}
+	for _, conn := range conns {
+		if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+			s.Logger.Errorf("send message err %v", err)
+			continue
+		}
+	}
+	return nil
+}

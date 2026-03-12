@@ -1,0 +1,104 @@
+version: "3.9"
+
+name: easychat-stack
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: easychat-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: wei20040829
+      MYSQL_DATABASE: easy_chat
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./deploy/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - easychat-net
+
+  redis:
+    image: redis:7.2
+    container_name: easychat-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - easychat-net
+
+  mongo:
+    image: mongo:7.0
+    container_name: easychat-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: easy_chat
+      TZ: Asia/Shanghai
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - easychat-net
+
+  etcd:
+    image: bitnamilegacy/etcd:3.5
+    container_name: easychat-etcd
+    restart: unless-stopped
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_NAME: easychat-etcd
+      ETCD_DATA_DIR: /bitnami/etcd
+      ETCD_INITIAL_CLUSTER: easychat-etcd=http://easychat-etcd:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://easychat-etcd:2380
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://localhost:2379,http://easychat-etcd:2379
+    ports:
+      - "2379:2379"
+    volumes:
+      - etcd-data:/bitnami/etcd
+    networks:
+      - easychat-net
+
+  kafka:
+    image: bitnamilegacy/kafka:3.7
+    container_name: easychat-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_INTERNAL://:19092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://easychat-kafka:19092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@easychat-kafka:9093
+      KAFKA_CFG_MESSAGE_MAX_BYTES: 5242880
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    networks:
+      - easychat-net
+
+networks:
+  easychat-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  mongo-data:
+  etcd-data:
+  kafka-data:

@@ -25,6 +25,13 @@ type FriendPutInListResp struct {
 	List []*FriendRequests `json:"list"`
 }
 
+type FriendPutOutListReq struct {
+}
+
+type FriendPutOutListResp struct {
+	List []*FriendRequests `json:"list"`
+}
+
 type FriendPutInReq struct {
 	ReqId  string `json:"req_id"`
 	ReqMsg string `json:"req_msg,omitempty"`

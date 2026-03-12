@@ -40,3 +40,13 @@ type UserInfoReq struct {
 type UserInfoResp struct {
 	Info User `json:"info"`
 }
+
+type FindUserReq struct {
+	Phone string   `json:"phone,optional"`
+	Name  string   `json:"name,optional"`
+	Ids   []string `json:"ids,optional"`
+}
+
+type FindUserResp struct {
+	List []User `json:"list"`
+}

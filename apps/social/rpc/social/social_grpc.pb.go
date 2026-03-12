@@ -22,6 +22,7 @@ const (
 	Social_FriendPutIn_FullMethodName       = "/social.social/FriendPutIn"
 	Social_FriendPutInHandle_FullMethodName = "/social.social/FriendPutInHandle"
 	Social_FriendPutInList_FullMethodName   = "/social.social/FriendPutInList"
+	Social_FriendPutOutList_FullMethodName  = "/social.social/FriendPutOutList"
 	Social_FriendList_FullMethodName        = "/social.social/FriendList"
 	Social_GroupCreate_FullMethodName       = "/social.social/GroupCreate"
 	Social_GroupPutin_FullMethodName        = "/social.social/GroupPutin"
@@ -35,16 +36,18 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SocialClient interface {
-	// 好友业务 ：请求好友、通过或拒绝申请、好友列表
-	// 发起好友申请
+	// 濂藉弸涓氬姟 锛氳姹傚ソ鍙嬨€侀€氳繃鎴栨嫆缁濈敵璇枫€佸ソ鍙嬪垪琛?
+	// 鍙戣捣濂藉弸鐢宠
 	FriendPutIn(ctx context.Context, in *FriendPutInReq, opts ...grpc.CallOption) (*FriendPutInResp, error)
-	// 处理好友申请
+	// 澶勭悊濂藉弸鐢宠
 	FriendPutInHandle(ctx context.Context, in *FriendPutInHandleReq, opts ...grpc.CallOption) (*FriendPutInHandleResp, error)
-	// 获取好友申请列表
+	// 鑾峰彇濂藉弸鐢宠鍒楄〃
 	FriendPutInList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error)
-	// 获取我的好友列表
+	// 鑾峰彇鎴戞己鍙戣捣鐨勮姹?
+	FriendPutOutList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error)
+	// 鑾峰彇鎴戠殑濂藉弸鍒楄〃
 	FriendList(ctx context.Context, in *FriendListReq, opts ...grpc.CallOption) (*FriendListResp, error)
-	// 群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
+	// 缇や笟鍔★細鍒涘缓缇わ紝淇敼缇わ紝缇ゅ叕鍛婏紝鐢宠缇わ紝鐢ㄦ埛缇ゅ垪琛紝缇ゆ垚鍛橈紝缇ら€€鍑?
 	GroupCreate(ctx context.Context, in *GroupCreateReq, opts ...grpc.CallOption) (*GroupCreateResp, error)
 	GroupPutin(ctx context.Context, in *GroupPutinReq, opts ...grpc.CallOption) (*GroupPutinResp, error)
 	GroupPutinList(ctx context.Context, in *GroupPutinListReq, opts ...grpc.CallOption) (*GroupPutinListResp, error)
@@ -91,6 +94,15 @@ func (c *socialClient) FriendPutInList(ctx context.Context, in *FriendPutInListR
 	return out, nil
 }
 
+func (c *socialClient) FriendPutOutList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FriendPutInListResp)
+	err := c.cc.Invoke(ctx, Social_FriendPutOutList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
 func (c *socialClient) FriendList(ctx context.Context, in *FriendListReq, opts ...grpc.CallOption) (*FriendListResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(FriendListResp)
@@ -165,16 +177,18 @@ func (c *socialClient) GroupUsers(ctx context.Context, in *GroupUsersReq, opts .
 // All implementations must embed UnimplementedSocialServer
 // for forward compatibility.
 type SocialServer interface {
-	// 好友业务 ：请求好友、通过或拒绝申请、好友列表
-	// 发起好友申请
+	// 濂藉弸涓氬姟 锛氳姹傚ソ鍙嬨€侀€氳繃鎴栨嫆缁濈敵璇枫€佸ソ鍙嬪垪琛?
+	// 鍙戣捣濂藉弸鐢宠
 	FriendPutIn(context.Context, *FriendPutInReq) (*FriendPutInResp, error)
-	// 处理好友申请
+	// 澶勭悊濂藉弸鐢宠
 	FriendPutInHandle(context.Context, *FriendPutInHandleReq) (*FriendPutInHandleResp, error)
-	// 获取好友申请列表
+	// 鑾峰彇濂藉弸鐢宠鍒楄〃
 	FriendPutInList(context.Context, *FriendPutInListReq) (*FriendPutInListResp, error)
-	// 获取我的好友列表
+	// 鑾峰彇鎴戞己鍙戣捣鐨勮姹?
+	FriendPutOutList(context.Context, *FriendPutInListReq) (*FriendPutInListResp, error)
+	// 鑾峰彇鎴戠殑濂藉弸鍒楄〃
 	FriendList(context.Context, *FriendListReq) (*FriendListResp, error)
-	// 群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
+	// 缇や笟鍔★細鍒涘缓缇わ紝淇敼缇わ紝缇ゅ叕鍛婏紝鐢宠缇わ紝鐢ㄦ埛缇ゅ垪琛紝缇ゆ垚鍛橈紝缇ら€€鍑?
 	GroupCreate(context.Context, *GroupCreateReq) (*GroupCreateResp, error)
 	GroupPutin(context.Context, *GroupPutinReq) (*GroupPutinResp, error)
 	GroupPutinList(context.Context, *GroupPutinListReq) (*GroupPutinListResp, error)
@@ -199,6 +213,9 @@ func (UnimplementedSocialServer) FriendPutInHandle(context.Context, *FriendPutIn
 }
 func (UnimplementedSocialServer) FriendPutInList(context.Context, *FriendPutInListReq) (*FriendPutInListResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method FriendPutInList not implemented")
+}
+func (UnimplementedSocialServer) FriendPutOutList(context.Context, *FriendPutInListReq) (*FriendPutInListResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method FriendPutOutList not implemented")
 }
 func (UnimplementedSocialServer) FriendList(context.Context, *FriendListReq) (*FriendListResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method FriendList not implemented")
@@ -292,6 +309,24 @@ func _Social_FriendPutInList_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SocialServer).FriendPutInList(ctx, req.(*FriendPutInListReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Social_FriendPutOutList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FriendPutInListReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SocialServer).FriendPutOutList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Social_FriendPutOutList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SocialServer).FriendPutOutList(ctx, req.(*FriendPutInListReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -440,6 +475,10 @@ var Social_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FriendPutInList",
 			Handler:    _Social_FriendPutInList_Handler,
+		},
+		{
+			MethodName: "FriendPutOutList",
+			Handler:    _Social_FriendPutOutList_Handler,
 		},
 		{
 			MethodName: "FriendList",

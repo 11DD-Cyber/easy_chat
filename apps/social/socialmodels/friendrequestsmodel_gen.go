@@ -39,6 +39,7 @@ type (
 		UpdateHandleResult(ctx context.Context, session sqlx.Session, friendreqId string, handleResult int64) error
 		Trans(ctx context.Context, fn func(ctx context.Context, session sqlx.Session) error) error
 		FindByTargetId(ctx context.Context, targetId string) ([]*FriendRequests, error)
+		FindBySenderId(ctx context.Context, senderId string) ([]*FriendRequests, error)
 	}
 
 	defaultFriendRequestsModel struct {
@@ -184,6 +185,16 @@ func (m *defaultFriendRequestsModel) FindByTargetId(ctx context.Context, targetI
 	var resp []*FriendRequests
 	query := fmt.Sprintf("select %s from %s where `req_uid`=? and `handle_result`=? order by `created_at` desc", friendRequestsRows, m.table)
 	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, targetId, constants.NoHandlerResult)
+	if err != nil && err != ErrNotFound {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (m *defaultFriendRequestsModel) FindBySenderId(ctx context.Context, senderId string) ([]*FriendRequests, error) {
+	var resp []*FriendRequests
+	query := fmt.Sprintf("select %s from %s where `user_id`=? order by `created_at` desc", friendRequestsRows, m.table)
+	err := m.QueryRowsNoCacheCtx(ctx, &resp, query, senderId)
 	if err != nil && err != ErrNotFound {
 		return nil, err
 	}

@@ -9,13 +9,13 @@ import (
 	"easy_chat/pkg/ctxdata"
 	"easy_chat/pkg/encrypt"
 	"easy_chat/pkg/wuid"
-	"errors"
+	"easy_chat/pkg/xerr"
 	"time"
 
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-var ErrPhoneIsRegister = errors.New("手机号已注册")
+var ErrPhoneIsRegister = xerr.NewMsgErr("\u624b\u673a\u53f7\u5df2\u6ce8\u518c")
 
 type RegisterLogic struct {
 	ctx    context.Context
@@ -33,7 +33,7 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 
 func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, error) {
 	// todo: add your logic here and delete this line
-	//1.验证用户是否注册，根据手机号验证
+	//1.楠岃瘉鐢ㄦ埛鏄惁娉ㄥ唽锛屾牴鎹墜鏈哄彿楠岃瘉
 	userEntity, err := l.svcCtx.UserModels.FindByPhone(l.ctx, in.Phone)
 	if err != nil && err != models.ErrNotFound {
 		return nil, err
@@ -41,7 +41,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	if userEntity != nil {
 		return nil, ErrPhoneIsRegister
 	}
-	//定义用户数据
+	//瀹氫箟鐢ㄦ埛鏁版嵁
 	userEntity = &models.Users{
 		Id:       wuid.GenUid(l.svcCtx.Config.Mysql.DataSource),
 		Avatar:   in.Avatar,
@@ -65,7 +65,7 @@ func (l *RegisterLogic) Register(in *user.RegisterReq) (*user.RegisterResp, erro
 	if _, err := l.svcCtx.UserModels.Insert(l.ctx, userEntity); err != nil {
 		return nil, err
 	}
-	//生成token
+	//鐢熸垚token
 	now := time.Now().Unix()
 	token, err := ctxdata.GetJwtToken(l.svcCtx.Config.Jwt.AccessSecret, now, l.svcCtx.Config.Jwt.AccessExpire, userEntity.Id)
 	if err != nil {

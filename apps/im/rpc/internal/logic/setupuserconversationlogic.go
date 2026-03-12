@@ -28,16 +28,11 @@ func NewSetUpUserConversationLogic(ctx context.Context, svcCtx *svc.ServiceConte
 	}
 }
 
-// 建立会话
 func (l *SetUpUserConversationLogic) SetUpUserConversation(in *im.SetUpUserConversationReq) (*im.SetUpUserConversationResp, error) {
-	// todo: add your logic here and delete this line
-
 	var res im.SetUpUserConversationResp
 	switch in.ChatType {
 	case 0:
-		//建立私聊的关系
 		conversationId := wuid.CombineId(in.SendId, in.RecvId)
-		//建立两者的会话
 		_, err := l.svcCtx.ConversationModel.FindOne(l.ctx, conversationId)
 		if err != nil {
 			if err == models.ErrNotFound {
@@ -62,9 +57,10 @@ func (l *SetUpUserConversationLogic) SetUpUserConversation(in *im.SetUpUserConve
 	}
 	return &res, nil
 }
+
 func (l *SetUpUserConversationLogic) setUpUserConversation(conversationId string, userId string, isShow bool) error {
-	//发送者
 	conversations, err := l.svcCtx.ConversationsModel.FindByUserId(l.ctx, userId)
+	isNew := false
 	if err != nil {
 		if err == models.ErrNotFound {
 			conversations = &models.Conversations{
@@ -72,22 +68,22 @@ func (l *SetUpUserConversationLogic) setUpUserConversation(conversationId string
 				UserId:           userId,
 				ConversationList: make(map[string]*models.Conversation),
 			}
+			isNew = true
 		} else {
 			return err
 		}
 	}
-	//更新会话记录
 	if _, ok := conversations.ConversationList[conversationId]; ok {
-		//存在
 		return nil
 	}
-	//需要建立
 	conversations.ConversationList[conversationId] = &models.Conversation{
 		ConversationId: conversationId,
 		ChatType:       0,
 		IsShow:         isShow,
 	}
-	//存在即更新，不存在则修改
+	if isNew {
+		return l.svcCtx.ConversationsModel.Insert(l.ctx, conversations)
+	}
 	_, err = l.svcCtx.ConversationsModel.Update(l.ctx, conversations)
 	return err
 }

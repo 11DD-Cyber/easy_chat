@@ -1,0 +1,69 @@
+[user-api] go: downloading github.com/zeromicro/go-zero v1.9.4
+[task-mq] go: downloading github.com/zeromicro/go-zero v1.9.4
+[im-rpc] go: downloading google.golang.org/grpc v1.65.0
+[im-rpc] go: downloading github.com/zeromicro/go-zero v1.9.4
+[social-rpc] go: downloading google.golang.org/grpc v1.65.0
+[social-rpc] go: downloading github.com/zeromicro/go-zero v1.9.4
+[im-api] go: downloading github.com/zeromicro/go-zero v1.9.4
+[user-rpc] go: downloading google.golang.org/grpc v1.65.0
+[user-rpc] go: downloading github.com/zeromicro/go-zero v1.9.4
+[im-ws] go: downloading github.com/zeromicro/go-zero v1.9.4
+[social-api] go: downloading github.com/zeromicro/go-zero v1.9.4
+[user-api] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[user-api] go: downloading google.golang.org/grpc v1.65.0
+[user-api] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[user-api] go: downloading google.golang.org/protobuf v1.36.5
+[user-api] go: downloading github.com/jinzhu/copier v0.4.0
+[user-api] go: downloading github.com/golang-jwt/jwt/v4 v4.5.2
+[task-mq] go: downloading github.com/zeromicro/go-queue v1.2.2
+[im-rpc] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[im-rpc] go: downloading github.com/pkg/errors v0.9.1
+[im-rpc] go: downloading google.golang.org/protobuf v1.36.5
+[task-mq] go: downloading go.mongodb.org/mongo-driver/v2 v2.4.1
+[task-mq] go: downloading github.com/gorilla/websocket v1.5.3
+[user-rpc] go: downloading github.com/pkg/errors v0.9.1
+[user-rpc] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[im-api] go: downloading google.golang.org/grpc v1.65.0
+[im-api] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[social-rpc] go: downloading github.com/pkg/errors v0.9.1
+[social-rpc] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[im-rpc] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[social-rpc] go: downloading google.golang.org/protobuf v1.36.5
+[im-rpc] go: downloading go.mongodb.org/mongo-driver/v2 v2.4.1
+[social-api] go: downloading google.golang.org/genproto/googleapis/rpc v0.0.0-20240701130421-f6361c86f094
+[social-api] go: downloading google.golang.org/grpc v1.65.0
+[im-rpc] [user-rpc] go: downloading google.golang.org/protobuf v1.36.5
+go: downloading github.com/jinzhu/copier v0.4.0
+[im-ws] go: downloading github.com/golang-jwt/jwt/v4 v4.5.2
+[im-ws] go: downloading github.com/gorilla/websocket v1.5.3
+[social-rpc] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[user-rpc] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[social-rpc] go: downloading github.com/jinzhu/copier v0.4.0
+[im-rpc] go: downloading github.com/edwingeng/wuid v1.0.0
+[im-api] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[user-rpc] go: downloading github.com/golang-jwt/jwt/v4 v4.5.2
+[social-api] go: downloading github.com/zeromicro/x v0.0.0-20240408115609-8224c482b07e
+[user-rpc] go: downloading github.com/jinzhu/copier v0.4.0
+[social-rpc] go: downloading github.com/edwingeng/wuid v1.0.0
+[im-api] go: downloading github.com/jinzhu/copier v0.4.0
+[user-rpc] go: downloading github.com/edwingeng/wuid v1.0.0
+[user-rpc] go: downloading golang.org/x/crypto v0.33.0
+[im-api] go: downloading google.golang.org/protobuf v1.36.5
+[im-api] go: downloading github.com/golang-jwt/jwt/v4 v4.5.2
+[social-api] go: downloading google.golang.org/protobuf v1.36.5
+[im-ws] go: downloading github.com/go-viper/mapstructure/v2 v2.5.0
+[social-api] go: downloading github.com/golang-jwt/jwt/v4 v4.5.2
+[im-ws] go: downloading github.com/zeromicro/go-queue v1.2.2
+[im-ws] go: downloading go.mongodb.org/mongo-driver/v2 v2.4.1
+[im-ws] go: downloading github.com/edwingeng/wuid v1.0.0
+[task-mq] apps\task\mq\internal\config\config.go:4:2: github.com/zeromicro/go-queue@v1.2.2: Get "https://proxy.golang.org/github.com/zeromicro/go-queue/@v/v1.2.2.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\task\mq\internal\config\config.go:5:2: github.com/zeromicro/go-zero@v1.9.4: Get "https://proxy.golang.org/github.com/zeromicro/go-zero/@v/v1.9.4.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\task\mq\internal\config\config.go:6:2: github.com/zeromicro/go-zero@v1.9.4: Get "https://proxy.golang.org/github.com/zeromicro/go-zero/@v/v1.9.4.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\models\chatlogmodel.go:3:8: github.com/zeromicro/go-zero@v1.9.4: Get "https://proxy.golang.org/github.com/zeromicro/go-zero/@v/v1.9.4.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\models\chatlogmodelgen.go:11:2: go.mongodb.org/mongo-driver/v2@v2.4.1: Get "https://proxy.golang.org/go.mongodb.org/mongo-driver/v2/@v/v2.4.1.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\models\chatlogmodelgen.go:12:2: go.mongodb.org/mongo-driver/v2@v2.4.1: Get "https://proxy.golang.org/go.mongodb.org/mongo-driver/v2/@v/v2.4.1.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\models\chatlogmodelgen.go:13:2: go.mongodb.org/mongo-driver/v2@v2.4.1: Get "https://proxy.golang.org/go.mongodb.org/mongo-driver/v2/@v/v2.4.1.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\ws\websocket\client.go:8:2: github.com/gorilla/websocket@v1.5.3: Get "https://proxy.golang.org/github.com/gorilla/websocket/@v/v1.5.3.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\im\ws\websocket\server.go:12:2: github.com/zeromicro/go-zero@v1.9.4: Get "https://proxy.golang.org/github.com/zeromicro/go-zero/@v/v1.9.4.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+[task-mq] apps\task\mq\mq.go:10:2: github.com/zeromicro/go-zero@v1.9.4: Get "https://proxy.golang.org/github.com/zeromicro/go-zero/@v/v1.9.4.zip": dial tcp 142.251.45.145:443: connectex: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.
+task-mq exited: exit status 1

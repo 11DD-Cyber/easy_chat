@@ -1,10 +1,13 @@
 package config
 
-import "github.com/zeromicro/go-zero/core/service"
+import (
+	"github.com/zeromicro/go-zero/core/service"
+	"github.com/zeromicro/go-zero/core/stores/redis"
+)
 
 type Config struct {
-	// 嵌入ServiceConf：复用go-zero的通用服务配置
-	// 包含服务名（Name）、日志、监控、链路追踪、运行模式（dev/prod）等通用配置项
+	// 宓屽叆ServiceConf锛氬鐢╣o-zero鐨勯€氱敤鏈嶅姟閰嶇疆
+	// 鍖呭惈鏈嶅姟鍚嶏紙Name锛夈€佹棩蹇椼€佺洃鎺с€侀摼璺拷韪€佽繍琛屾ā寮忥紙dev/prod锛夌瓑閫氱敤閰嶇疆椤?
 	service.ServiceConf
 	ListenOn string
 	JwtAuth  struct {
@@ -18,4 +21,5 @@ type Config struct {
 		Addrs []string
 		Topic string
 	}
+	Redisx redis.RedisConf
 }

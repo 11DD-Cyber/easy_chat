@@ -11,3 +11,7 @@ MsgChatTransfer:
   Addrs:
     - 127.0.0.1:9092
   Topic: MsgChatTransfer
+
+Redisx:
+  Host: 127.0.0.1:6379
+  Pass:

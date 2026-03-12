@@ -15,11 +15,11 @@ import (
 type AckType int
 
 const (
-	//不进行ack确认
+	// 不做 ACK 确认
 	NoAck AckType = iota
-	//只回 -两次通信
+	// 仅做一次 ACK
 	OnlyAck
-	//严格 三次通信
+	// 严格模式，需要完成两次确认
 	RigorAck
 )
 
@@ -36,7 +36,7 @@ func (t AckType) ToString() string {
 }
 
 type Server struct {
-	// 路由规则表
+	// 保护用户与连接映射的读写锁
 	sync.RWMutex
 	authentication Authentication
 	routes         map[string]HandlerFunc
@@ -46,6 +46,13 @@ type Server struct {
 	upgrader       websocket.Upgrader
 	Logger         logx.Logger
 	Ack            AckType
+	httpServer     *http.Server
+	lifecycle      Lifecycle
+}
+
+type Lifecycle interface {
+	OnConnect(s *Server, conn *Conn, uid string)
+	OnDisconnect(s *Server, conn *Conn, uid string)
 }
 
 func (s *Server) AddRoutes(rs []Route) {
@@ -56,6 +63,10 @@ func (s *Server) AddRoutes(rs []Route) {
 		s.routes[r.Method] = r.Handler
 	}
 }
+
+func (s *Server) SetLifecycle(l Lifecycle) {
+	s.lifecycle = l
+}
 func NewServer(addr string, auth Authentication) *Server {
 	return &Server{
 		routes:         make(map[string]HandlerFunc),
@@ -63,40 +74,45 @@ func NewServer(addr string, auth Authentication) *Server {
 		authentication: auth,
 		userToConn:     make(map[string]*Conn),
 		addr:           addr,
-		upgrader:       websocket.Upgrader{},
-		// 初始化日志：绑定上下文
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				// Allow frontend running on different origin to establish websocket connection.
+				return true
+			},
+		},
+		// 初始化日志上下文
 		Logger: logx.WithContext(context.Background()),
-		Ack:    RigorAck,
+		Ack:    NoAck,
 	}
 }
 
 func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
-	// 异常恢复：防止单个WS连接处理panic导致整个服务崩溃
+	// recover 防护，避免单个连接处理 panic 影响整个服务
 	defer func() {
 		if r := recover(); r != nil {
 			s.Logger.Errorf("server handler ws recover err %v", r)
 		}
 	}()
-	//鉴权
+	// 鉴权
 	if !s.authentication.Auth(w, r) {
 		s.Logger.Errorf("authentication failed")
 		http.Error(w, "authentication failed", http.StatusUnauthorized)
 		return
 	}
-	// 把HTTP请求升级为WebSocket连接
+	// 将 HTTP 请求升级为 WebSocket
 	conn := NewConn(w, r, s)
 	if conn == nil {
 		return
 	}
 
-	//记录连接
+	// 记录连接
 	s.addConn(conn, r)
-	//读取信息，完成请求
+	// 启动读写协程，处理后续消息
 	go s.handlerConn(conn)
 
 }
 
-// 根据连接对象执行任务处理
+// 基于连接对象，持续读取并处理消息
 func (s *Server) handlerConn(conn *Conn) {
 	defer func() {
 		s.Close(conn)
@@ -107,7 +123,7 @@ func (s *Server) handlerConn(conn *Conn) {
 		go s.readAck(conn)
 	}
 	for {
-		//获取请求消息
+		// 读取客户端消息
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
 			s.Logger.Errorf("websocket conn read message err %v", err)
@@ -126,9 +142,9 @@ func (s *Server) handlerConn(conn *Conn) {
 			conn.handleCAck(&message)
 			continue
 		}
-		//根据请求消息类型分类处理
+		// 根据帧类型分类处理
 		if s.Ack != NoAck && message.FrameType != FrameNoAck {
-			//将消息添加到队列中
+			// 放入等待 ACK 的队列
 			s.Logger.Infof("conn message write in msgMq %v", message)
 			conn.appendMsgMq(&message)
 
@@ -141,21 +157,21 @@ func (s *Server) readAck(conn *Conn) {
 	for {
 		select {
 		case <-conn.done:
-			//关闭了连接
+			// 连接已关闭
 			s.Logger.Infof("close message ack uid ")
 			return
 		default:
 			conn.messageMu.Lock()
 			if len(conn.readMessages) == 0 {
 				conn.messageMu.Unlock()
-				//没有消息可以睡眠100ms
+				// 队列为空，等待 100ms
 				time.Sleep(100 * time.Microsecond)
 				continue
 
 			}
-			//取出队列中第一个数据
+			// 取出队列第一条
 			message := conn.readMessages[0]
-			//根据ack的确认策略选择合适的处理方式
+			// 根据 ACK 策略处理
 			switch s.Ack {
 			case OnlyAck:
 				s.Send(&Message{
@@ -163,7 +179,7 @@ func (s *Server) readAck(conn *Conn) {
 					AckSeq:    message.AckSeq + 1,
 					Id:        message.Id,
 				}, conn.Conn)
-				//只回答，向客户端发送ack
+				// 只发送 ACK，稍后交给业务处理
 				conn.readMessages = conn.readMessages[1:]
 				conn.messageMu.Unlock()
 				conn.message <- message
@@ -179,11 +195,11 @@ func (s *Server) readAck(conn *Conn) {
 						s.Logger.Infof("message ack RigorAck send")
 						continue
 					}
-					if entry.ackConfirmed == true { // 客户端已经回传确认
+					if entry.ackConfirmed == true { // 客户端已完成最终确认
 						conn.readMessages = conn.readMessages[1:]
 						conn.messageMu.Unlock()
 						conn.message <- message
-						s.Logger.Infof("客户端已经回传确认%v", message.Id)
+						s.Logger.Infof("message ack RigorAck confirmed id %v", message.Id)
 						continue
 					}
 					if time.Since(entry.ackTime) > defaultAckTimeout {
@@ -202,27 +218,27 @@ func (s *Server) handleWrite(conn *Conn) {
 	for {
 		select {
 		case <-conn.done:
-			//结束
+			// 连接结束
 			return
 		case message := <-conn.message:
-			//依据请求消息类型分类处理
+			// 按帧类型下发
 			switch message.FrameType {
 			case FramePing:
-				//ping:回复
+				// 直接回复 Pong
 				s.Send(&Message{FrameType: FramePing}, conn.Conn)
 			case FrameData, FrameNoAck:
-				//处理
+				// 业务数据
 				if handler, ok := s.routes[message.Method]; ok {
 					handler(s, conn, message)
 				} else {
 					s.Send(&Message{
 						FrameType: FrameData,
-						Data:      fmt.Sprintf("不存在请求方法 %v", message.Method),
+						Data:      fmt.Sprintf("未找到路由: %v", message.Method),
 					}, conn.Conn)
 				}
 			}
 			if s.Ack != NoAck {
-				//删除 消息ack的序号记录
+				// 删除已完成 ACK 的序列
 				conn.messageMu.Lock()
 				delete(conn.readMessageSeq, message.Id)
 				conn.messageMu.Unlock()
@@ -238,15 +254,17 @@ func (s *Server) addConn(conn *Conn, req *http.Request) {
 		return
 	}
 	s.RWMutex.Lock()
-	defer s.RWMutex.Unlock()
-	//如果原来就有连接
+	// 若已有连接，关闭旧连接
 	if c := s.userToConn[uid]; c != nil {
-		//关闭原来的连接
 		c.Close()
 	}
 	s.connToUser[conn] = uid
 	s.userToConn[uid] = conn
+	s.RWMutex.Unlock()
 	s.Logger.Infof("user %s connect, remote: %s", uid, req.RemoteAddr)
+	if s.lifecycle != nil {
+		go s.lifecycle.OnConnect(s, conn, uid)
+	}
 }
 
 func (s *Server) GetConns(uids ...string) []*websocket.Conn {
@@ -254,13 +272,13 @@ func (s *Server) GetConns(uids ...string) []*websocket.Conn {
 	defer s.RWMutex.RUnlock()
 	var res []*websocket.Conn
 	if len(uids) == 0 {
-		//获取全部
+		// 返回全部连接
 		res = make([]*websocket.Conn, 0, len(s.userToConn))
 		for _, conn := range s.userToConn {
 			res = append(res, conn.Conn)
 		}
 	} else {
-		//获取部分
+		// 仅返回指定用户连接
 		res = make([]*websocket.Conn, 0, len(uids))
 		for _, uid := range uids {
 			if conn, ok := s.userToConn[uid]; ok {
@@ -281,7 +299,7 @@ func (s *Server) GetUsers(conns ...*Conn) []string {
 			res = append(res, uid)
 		}
 	} else {
-		//获取部分
+		// 获取部分连接对应的用户
 		res = make([]string, 0, len(conns))
 		for _, conn := range conns {
 			if uid, ok := s.connToUser[conn]; ok {
@@ -293,29 +311,39 @@ func (s *Server) GetUsers(conns ...*Conn) []string {
 }
 
 func (s *Server) Close(conn *Conn) {
-	//先关闭连接（done通道和底层WS连接）
+	// 先关闭 done 通道与底层 WebSocket
 	conn.Close()
 	s.RWMutex.Lock()
-	defer s.RWMutex.Unlock()
 	uid := s.connToUser[conn]
 	delete(s.connToUser, conn)
 	delete(s.userToConn, uid)
+	s.RWMutex.Unlock()
+	if uid != "" && s.lifecycle != nil {
+		go s.lifecycle.OnDisconnect(s, conn, uid)
+	}
 }
 
 func (s *Server) Start() {
-	http.HandleFunc("/ws", s.ServerWs)
-	http.ListenAndServe(s.addr, nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", s.ServerWs)
+	s.httpServer = &http.Server{
+		Addr:    s.addr,
+		Handler: mux,
+	}
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		s.Logger.Errorf("websocket server listen error: %v", err)
+	}
 }
 
 func (s *Server) Stop() {
 
-	//关闭所有连接
+	// 关闭全部连接
 	s.Lock()
 	defer s.Unlock()
 	for conn := range s.connToUser {
 		conn.Close()
 	}
-	//清空映射
+	// 清空映射
 	s.connToUser = make(map[*Conn]string)
 	s.userToConn = make(map[string]*Conn)
 	fmt.Println("stop server")

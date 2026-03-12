@@ -41,15 +41,11 @@ type (
 	Groups                = social.Groups
 
 	Social interface {
-		// 好友业务 ：请求好友、通过或拒绝申请、好友列表
 		FriendPutIn(ctx context.Context, in *FriendPutInReq, opts ...grpc.CallOption) (*FriendPutInResp, error)
-		// 处理好友申请
 		FriendPutInHandle(ctx context.Context, in *FriendPutInHandleReq, opts ...grpc.CallOption) (*FriendPutInHandleResp, error)
-		// 获取好友申请列表
 		FriendPutInList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error)
-		// 获取我的好友列表
+		FriendPutOutList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error)
 		FriendList(ctx context.Context, in *FriendListReq, opts ...grpc.CallOption) (*FriendListResp, error)
-		// 群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
 		GroupCreate(ctx context.Context, in *GroupCreateReq, opts ...grpc.CallOption) (*GroupCreateResp, error)
 		GroupPutin(ctx context.Context, in *GroupPutinReq, opts ...grpc.CallOption) (*GroupPutinResp, error)
 		GroupPutinList(ctx context.Context, in *GroupPutinListReq, opts ...grpc.CallOption) (*GroupPutinListResp, error)
@@ -64,36 +60,34 @@ type (
 )
 
 func NewSocial(cli zrpc.Client) Social {
-	return &defaultSocial{
-		cli: cli,
-	}
+	return &defaultSocial{cli: cli}
 }
 
-// 好友业务 ：请求好友、通过或拒绝申请、好友列表
 func (m *defaultSocial) FriendPutIn(ctx context.Context, in *FriendPutInReq, opts ...grpc.CallOption) (*FriendPutInResp, error) {
 	client := social.NewSocialClient(m.cli.Conn())
 	return client.FriendPutIn(ctx, in, opts...)
 }
 
-// 处理好友申请
 func (m *defaultSocial) FriendPutInHandle(ctx context.Context, in *FriendPutInHandleReq, opts ...grpc.CallOption) (*FriendPutInHandleResp, error) {
 	client := social.NewSocialClient(m.cli.Conn())
 	return client.FriendPutInHandle(ctx, in, opts...)
 }
 
-// 获取好友申请列表
 func (m *defaultSocial) FriendPutInList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error) {
 	client := social.NewSocialClient(m.cli.Conn())
 	return client.FriendPutInList(ctx, in, opts...)
 }
 
-// 获取我的好友列表
+func (m *defaultSocial) FriendPutOutList(ctx context.Context, in *FriendPutInListReq, opts ...grpc.CallOption) (*FriendPutInListResp, error) {
+	client := social.NewSocialClient(m.cli.Conn())
+	return client.FriendPutOutList(ctx, in, opts...)
+}
+
 func (m *defaultSocial) FriendList(ctx context.Context, in *FriendListReq, opts ...grpc.CallOption) (*FriendListResp, error) {
 	client := social.NewSocialClient(m.cli.Conn())
 	return client.FriendList(ctx, in, opts...)
 }
 
-// 群业务：创建群，修改群，群公告，申请群，用户群列表，群成员，群退出
 func (m *defaultSocial) GroupCreate(ctx context.Context, in *GroupCreateReq, opts ...grpc.CallOption) (*GroupCreateResp, error) {
 	client := social.NewSocialClient(m.cli.Conn())
 	return client.GroupCreate(ctx, in, opts...)

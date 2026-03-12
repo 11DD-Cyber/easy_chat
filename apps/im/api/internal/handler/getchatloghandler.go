@@ -17,7 +17,13 @@ import (
 func getChatLogHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.ChatLogReq
-		if err := httpx.Parse(r, &req); err != nil {
+		var err error
+		if r.Method == http.MethodGet {
+			err = httpx.ParseForm(r, &req)
+		} else {
+			err = httpx.Parse(r, &req)
+		}
+		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 			return
 		}

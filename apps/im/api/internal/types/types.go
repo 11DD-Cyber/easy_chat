@@ -15,11 +15,11 @@ type ChatLog struct {
 }
 
 type ChatLogReq struct {
-	MsgId          string `json:"msgId"`
-	ConversationId string `json:"conversationId"`
-	StartSendTime  int64  `json:"startSendTime,omitempty"`
-	EndSendTime    int64  `json:"endSendTime,omitempty"`
-	Count          int64  `json:"count"`
+	MsgId          string `json:"msgId,optional" form:"msgId,optional"`
+	ConversationId string `json:"conversationId" form:"conversationId"`
+	StartSendTime  int64  `json:"startSendTime,optional" form:"startSendTime,optional"`
+	EndSendTime    int64  `json:"endSendTime,optional" form:"endSendTime,optional"`
+	Count          int64  `json:"count" form:"count"`
 }
 
 type ChatLogResp struct {

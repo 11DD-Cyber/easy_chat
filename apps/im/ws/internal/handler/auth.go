@@ -26,6 +26,11 @@ func NewJwtAuth(svc *svc.ServiceContext) *JwtAuth {
 }
 
 func (j *JwtAuth) Auth(w http.ResponseWriter, r *http.Request) bool {
+	if r.Header.Get("Authorization") == "" {
+		if rawToken := r.URL.Query().Get("token"); rawToken != "" {
+			r.Header.Set("Authorization", "Bearer "+rawToken)
+		}
+	}
 	token, err := j.parser.ParseToken(r, j.svc.Config.JwtAuth.AccessSecret, "")
 	if err != nil {
 		j.Logger.Errorf("parse token err %v", err)
